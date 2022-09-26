@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="一、问题&amp;emsp;&amp;emsp;今天发现了之前写的一个sql,数据量一大查询的就很慢。&amp;emsp;&amp;emsp;这个sql用于导出excel，因为很多字段都是用的字典，为了让自己写的代码更加简洁，也为了更加的方便，自己就耍了个”小聪明”，在数据库写了个转换字典的函数。以下是创建该函数的代码： 1234567CREATE DEFINER&#x3D;&#96;root&#96;@&#96;%&#96; FUNCTION &#96;func_select">
+<meta property="og:type" content="article">
+<meta property="og:title" content="sql中使用自定义函数查询速度很慢的问题">
+<meta property="og:url" content="http://ashuo-blog.top/2022/09/26/220926/index.html">
+<meta property="og:site_name" content="王长硕的博客">
+<meta property="og:description" content="一、问题&amp;emsp;&amp;emsp;今天发现了之前写的一个sql,数据量一大查询的就很慢。&amp;emsp;&amp;emsp;这个sql用于导出excel，因为很多字段都是用的字典，为了让自己写的代码更加简洁，也为了更加的方便，自己就耍了个”小聪明”，在数据库写了个转换字典的函数。以下是创建该函数的代码： 1234567CREATE DEFINER&#x3D;&#96;root&#96;@&#96;%&#96; FUNCTION &#96;func_select">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-09-26T06:38:03.000Z">
+<meta property="article:modified_time" content="2022-09-26T07:56:05.147Z">
+<meta property="article:author" content="王长硕">
+<meta property="article:tag" content="数据库,sql优化">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/logo.png">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/logo.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/logo.png">
+        
+      
+    
+    <!-- title -->
+    <title>sql中使用自定义函数查询速度很慢的问题</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/a441138375">项目</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2022/09/20/exportDb/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://ashuo-blog.top/2022/09/26/220926/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://ashuo-blog.top/2022/09/26/220926/&text=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://ashuo-blog.top/2022/09/26/220926/&title=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://ashuo-blog.top/2022/09/26/220926/&is_video=false&description=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=sql中使用自定义函数查询速度很慢的问题&body=Check out this article: http://ashuo-blog.top/2022/09/26/220926/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://ashuo-blog.top/2022/09/26/220926/&title=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://ashuo-blog.top/2022/09/26/220926/&title=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://ashuo-blog.top/2022/09/26/220926/&title=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://ashuo-blog.top/2022/09/26/220926/&title=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://ashuo-blog.top/2022/09/26/220926/&name=sql中使用自定义函数查询速度很慢的问题&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://ashuo-blog.top/2022/09/26/220926/&t=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98"><span class="toc-number">1.</span> <span class="toc-text">一、问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E9%97%AE%E9%A2%98"><span class="toc-number">2.</span> <span class="toc-text">二、问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%B5%8B%E8%AF%95"><span class="toc-number">3.</span> <span class="toc-text">三、测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E8%AE%BA"><span class="toc-number">4.</span> <span class="toc-text">四、结论</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        sql中使用自定义函数查询速度很慢的问题
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">王长硕</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-09-26T06:38:03.000Z" itemprop="datePublished">2022-09-26</time>
+        
+      
+    </div>
+
+
+      
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93-sql%E4%BC%98%E5%8C%96/" rel="tag">数据库,sql优化</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h3 id="一、问题"><a href="#一、问题" class="headerlink" title="一、问题"></a>一、问题</h3><p>&emsp;&emsp;今天发现了之前写的一个sql,数据量一大查询的就很慢。<br><br>&emsp;&emsp;这个sql用于导出excel，因为很多字段都是用的字典，为了让自己写的代码更加简洁，也为了更加的方便，自己就耍了个”小聪明”，在数据库写了个转换字典的函数。<br><br>以下是创建该函数的代码：<br></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CREATE DEFINER=`root`@`%` FUNCTION `func_selectDictLabel`(dictType VARCHAR(50),dictValue VARCHAR(20)) RETURNS varchar(20) CHARSET utf8</span><br><span class="line">BEGIN</span><br><span class="line">DECLARE str VARCHAR(20) DEFAULT <span class="string">&#x27;&#x27;</span>;</span><br><span class="line">	select dict_label into str from sys_dict_data</span><br><span class="line">		<span class="built_in">where</span> dict_type = dictType and dict_value = dictValue;</span><br><span class="line">	RETURN str;</span><br><span class="line">END</span><br></pre></td></tr></table></figure>
+<h3 id="二、问题"><a href="#二、问题" class="headerlink" title="二、问题"></a>二、问题</h3><p>sql的代码不方便展示,一共是13个字段用到了该函数，五千条数据查询出来用时18.1s.<br><br>我思考了一下,感觉不是使用该函数的问题，用了这个函数无非就是多了一个关联的表，于是继续测试了一下。</p>
+<h3 id="三、测试"><a href="#三、测试" class="headerlink" title="三、测试"></a>三、测试</h3><p>1.使用函数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">SELECT </span><br><span class="line">func_selectDictLabel(<span class="string">&#x27;sys_yes_no&#x27;</span>,s.字段)</span><br><span class="line">FROM table s</span><br></pre></td></tr></table></figure>
+<p>5000+数据，竟然用时1.417s<br><br>2.不使用函数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SELECT </span><br><span class="line">sdd.dict_label</span><br><span class="line">FROM table s</span><br><span class="line">left <span class="built_in">join</span> sys_dict_data sdd on sdd.dict_value = s.字段</span><br></pre></td></tr></table></figure>
+<p>5000+数据，只用了0.195s<br></p>
+<h3 id="四、结论"><a href="#四、结论" class="headerlink" title="四、结论"></a>四、结论</h3><p>确实是这个函数，导致查询很慢。百度得到以下结论：<br><br>1、自定义函数没有办法建立函数索引，这样导致查询结果很慢。<br><br>2、自定义函数的性能比较差，能不用的情况尽量不要用。<br><br>3、能用存储过程，就不用自定义函数。<br></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="https://github.com/a441138375">项目</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98"><span class="toc-number">1.</span> <span class="toc-text">一、问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E9%97%AE%E9%A2%98"><span class="toc-number">2.</span> <span class="toc-text">二、问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%B5%8B%E8%AF%95"><span class="toc-number">3.</span> <span class="toc-text">三、测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E8%AE%BA"><span class="toc-number">4.</span> <span class="toc-text">四、结论</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://ashuo-blog.top/2022/09/26/220926/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://ashuo-blog.top/2022/09/26/220926/&text=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://ashuo-blog.top/2022/09/26/220926/&title=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://ashuo-blog.top/2022/09/26/220926/&is_video=false&description=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=sql中使用自定义函数查询速度很慢的问题&body=Check out this article: http://ashuo-blog.top/2022/09/26/220926/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://ashuo-blog.top/2022/09/26/220926/&title=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://ashuo-blog.top/2022/09/26/220926/&title=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://ashuo-blog.top/2022/09/26/220926/&title=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://ashuo-blog.top/2022/09/26/220926/&title=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://ashuo-blog.top/2022/09/26/220926/&name=sql中使用自定义函数查询速度很慢的问题&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://ashuo-blog.top/2022/09/26/220926/&t=sql中使用自定义函数查询速度很慢的问题"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2022
+    王长硕
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/a441138375">项目</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
